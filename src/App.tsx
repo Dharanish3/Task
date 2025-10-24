@@ -5,7 +5,7 @@ import TaskInput from "./Pages/TaskInput";
 import TaskList from "./Pages/TaskList";
 
 function App() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<any>();
 
   useEffect(() => {
     dispatch(fetchTasks());
