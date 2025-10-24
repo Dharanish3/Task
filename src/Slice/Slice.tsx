@@ -1,4 +1,4 @@
-import { createSlice, type PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction, createAsyncThunk, type ActionReducerMapBuilder } from "@reduxjs/toolkit";
 import type { Task } from "../Types/Task";
 import axios from "axios";
 
@@ -7,13 +7,22 @@ export const fetchTasks = createAsyncThunk("tasks/fetchTasks", async () => {
   return response.data;
 });
 
+// Add a typed state shape so builder types are inferred correctly
+interface TaskState {
+  items: Task[];
+  status: "idle" | "loading" | "succeeded" | "failed";
+  filter: "all" | "completed" | "pending";
+}
+
+const initialState: TaskState = {
+  items: [],
+  status: "idle",
+  filter: "all",
+};
+
 const taskSlice = createSlice({
   name: "tasks",
-  initialState: {
-    items: [] as Task[],
-    status: "idle",
-    filter: "all", // 'all' | 'completed' | 'pending'
-  },
+  initialState, // use the typed initialState
   reducers: {
     addTask(state, action: PayloadAction<string>) {
       const newTask: Task = {
@@ -30,11 +39,13 @@ const taskSlice = createSlice({
     deleteTask(state, action: PayloadAction<number>) {
       state.items = state.items.filter(task => task.id !== action.payload);
     },
-    setFilter(state, action: PayloadAction<string>) {
+    // narrow the payload type to the filter union
+    setFilter(state, action: PayloadAction<TaskState["filter"]>) {
       state.filter = action.payload;
     },
   },
-  extraReducers(builder) {
+  // type the builder to avoid implicit any errors
+  extraReducers: (builder: ActionReducerMapBuilder<TaskState>) => {
     builder.addCase(fetchTasks.fulfilled, (state, action) => {
       state.items = action.payload;
       state.status = "succeeded";
